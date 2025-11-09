@@ -3,9 +3,10 @@ import { AmbientField } from '@/components/AmbientField';
 import { ReactiveOverlay } from '@/components/ReactiveOverlay';
 import { SemanticLayer } from '@/components/SemanticLayer';
 import { StateManager } from '@/components/StateManager';
+import { SpectrumVisualizer } from '@/components/SpectrumVisualizer';
 import { AudioVisualizer, mapFrequencyToHue, mapAmplitudeToIntensity } from '@/lib/audioVisualization';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff } from 'lucide-react';
+import { Mic, MicOff, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type ContextState = 'intro' | 'active' | 'immersive' | 'reflection';
@@ -18,6 +19,7 @@ const Index = () => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [audioHue, setAudioHue] = useState(0);
   const [audioAmplitude, setAudioAmplitude] = useState(0);
+  const [spectrumVisible, setSpectrumVisible] = useState(false);
   const visualizerRef = useRef<AudioVisualizer | null>(null);
   
   const handleInteraction = useCallback(() => {
@@ -77,6 +79,7 @@ const Index = () => {
       visualizerRef.current?.stop();
       visualizerRef.current = null;
       setAudioEnabled(false);
+      setSpectrumVisible(false);
       setAudioHue(0);
       setAudioAmplitude(0);
       
@@ -128,7 +131,7 @@ const Index = () => {
       
       {/* Audio Visualization Toggle */}
       {contextState !== 'intro' && (
-        <div className="fixed bottom-8 right-8 z-50">
+        <div className="fixed bottom-8 right-8 z-50 flex flex-col gap-3">
           <Button
             onClick={toggleAudioVisualization}
             variant={audioEnabled ? "default" : "outline"}
@@ -146,7 +149,35 @@ const Index = () => {
               <MicOff className="w-6 h-6" />
             )}
           </Button>
+          
+          {audioEnabled && (
+            <Button
+              onClick={() => setSpectrumVisible(!spectrumVisible)}
+              variant={spectrumVisible ? "default" : "outline"}
+              size="icon"
+              className="w-14 h-14 rounded-full shadow-lg transition-all duration-300 animate-fadeInBlur"
+              style={{
+                background: spectrumVisible ? 'hsl(var(--aurora-purple) / 0.3)' : 'hsl(var(--background) / 0.8)',
+                backdropFilter: 'blur(10px)',
+                border: spectrumVisible ? '2px solid hsl(var(--aurora-purple))' : '1px solid hsl(var(--border))',
+              }}
+            >
+              <BarChart3 
+                className="w-6 h-6" 
+                style={{ color: spectrumVisible ? 'hsl(var(--aurora-purple))' : 'hsl(var(--foreground))' }} 
+              />
+            </Button>
+          )}
         </div>
+      )}
+      
+      {/* Spectrum Visualizer */}
+      {audioEnabled && spectrumVisible && (
+        <SpectrumVisualizer
+          audioContext={visualizerRef.current?.getAudioContext() || null}
+          analyser={visualizerRef.current?.getAnalyser() || null}
+          audioHue={audioHue}
+        />
       )}
     </main>
   );

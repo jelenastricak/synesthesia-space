@@ -13,6 +13,15 @@ export class AudioVisualizer {
     this.onAmplitudeChange = onAmplitudeChange;
   }
   
+  // Expose audio context and analyser for external use (e.g., spectrum visualizer)
+  getAudioContext(): AudioContext | null {
+    return this.audioContext;
+  }
+  
+  getAnalyser(): AnalyserNode | null {
+    return this.analyser;
+  }
+  
   async start() {
     try {
       // Request microphone access
