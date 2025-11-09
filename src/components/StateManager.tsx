@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { startReflectionPad, stopReflectionPad } from '@/lib/audioSynth';
 
 type ContextState = 'intro' | 'active' | 'immersive' | 'reflection';
 
@@ -32,6 +33,15 @@ export const StateManager = ({
       setLastInteractionTime(Date.now());
     }
   }, [interactionFrequency]);
+  
+  // Handle reflection pad audio
+  useEffect(() => {
+    if (contextState === 'reflection') {
+      startReflectionPad();
+    } else {
+      stopReflectionPad();
+    }
+  }, [contextState]);
   
   // State transitions based on interaction
   useEffect(() => {

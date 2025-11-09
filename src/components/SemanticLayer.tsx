@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { playWordSparkle } from '@/lib/audioSynth';
 
 interface Word {
   id: number;
@@ -202,6 +203,9 @@ export const SemanticLayer = ({ interactionFrequency, onHover }: SemanticLayerPr
           };
           
           setWords(prev => [...prev, newWord]);
+          
+          // Play sparkle sound for word generation
+          playWordSparkle();
           
           // Fade in
           setTimeout(() => {
