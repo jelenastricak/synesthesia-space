@@ -104,6 +104,7 @@ const Index = () => {
         motionIntensity={motionIntensity} 
         audioHue={audioHue}
         audioAmplitude={audioAmplitude}
+        audioEnabled={audioEnabled}
       />
       
       {/* Layer 2: Reactive Overlay */}
