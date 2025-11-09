@@ -123,6 +123,18 @@ All colors MUST be HSL.
     }
   }
   
+  @keyframes flash {
+    0% {
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.9;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  
   .animate-breathe {
     animation: breathe 6s ease-in-out infinite;
   }
@@ -142,5 +154,9 @@ All colors MUST be HSL.
   
   .animate-dissolve {
     animation: dissolve 1.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  }
+  
+  .animate-flash {
+    animation: flash 0.3s ease-out forwards;
   }
 }

@@ -6,8 +6,9 @@ import { StateManager } from '@/components/StateManager';
 import { SpectrumVisualizer } from '@/components/SpectrumVisualizer';
 import { AudioVisualizer, mapFrequencyToHue, mapAmplitudeToIntensity } from '@/lib/audioVisualization';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, BarChart3 } from 'lucide-react';
+import { Mic, MicOff, BarChart3, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
 
 type ContextState = 'intro' | 'active' | 'immersive' | 'reflection';
 
@@ -20,7 +21,9 @@ const Index = () => {
   const [audioHue, setAudioHue] = useState(0);
   const [audioAmplitude, setAudioAmplitude] = useState(0);
   const [spectrumVisible, setSpectrumVisible] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
   const visualizerRef = useRef<AudioVisualizer | null>(null);
+  const mainRef = useRef<HTMLElement>(null);
   
   const handleInteraction = useCallback(() => {
     setInteractionFrequency(prev => Math.min(10, prev + 1));
@@ -90,6 +93,54 @@ const Index = () => {
     }
   }, [audioEnabled, toast]);
   
+  const captureScreenshot = useCallback(async () => {
+    if (!mainRef.current) return;
+    
+    try {
+      // Show flash animation
+      setShowFlash(true);
+      
+      // Wait a brief moment for the flash to be visible
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Capture the screenshot
+      const canvas = await html2canvas(mainRef.current, {
+        backgroundColor: null,
+        scale: 2, // Higher quality
+        logging: false,
+      });
+      
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+          link.download = `aurora-capture-${timestamp}.png`;
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
+          
+          toast({
+            title: "Screenshot Captured",
+            description: "Your visualization has been saved as a PNG image",
+          });
+        }
+      }, 'image/png');
+      
+      // Hide flash after a brief moment
+      setTimeout(() => setShowFlash(false), 300);
+    } catch (error) {
+      console.error('Screenshot failed:', error);
+      setShowFlash(false);
+      toast({
+        title: "Screenshot Failed",
+        description: "Unable to capture the visualization",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+  
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -98,7 +149,7 @@ const Index = () => {
   }, []);
   
   return (
-    <main className="relative w-screen h-screen overflow-hidden">
+    <main ref={mainRef} className="relative w-screen h-screen overflow-hidden">
       {/* Layer 1: Ambient Field */}
       <AmbientField 
         motionIntensity={motionIntensity} 
@@ -130,9 +181,31 @@ const Index = () => {
         onStateChange={handleStateChange}
       />
       
+      {/* Flash overlay for screenshot */}
+      {showFlash && (
+        <div 
+          className="fixed inset-0 z-[100] pointer-events-none animate-flash"
+          style={{ background: 'white' }}
+        />
+      )}
+      
       {/* Audio Visualization Toggle */}
       {contextState !== 'intro' && (
         <div className="fixed bottom-8 right-8 z-50 flex flex-col gap-3">
+          <Button
+            onClick={captureScreenshot}
+            variant="outline"
+            size="icon"
+            className="w-14 h-14 rounded-full shadow-lg transition-all duration-300"
+            style={{
+              background: 'hsl(var(--background) / 0.8)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid hsl(var(--border))',
+            }}
+          >
+            <Camera className="w-6 h-6" />
+          </Button>
+          
           <div className="relative">
             {audioEnabled && (
               <div 
