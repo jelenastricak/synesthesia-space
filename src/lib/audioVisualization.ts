@@ -37,7 +37,7 @@ export class AudioVisualizer {
       this.audioContext = new AudioContext();
       this.analyser = this.audioContext.createAnalyser();
       this.analyser.fftSize = 2048;
-      this.analyser.smoothingTimeConstant = 0.8;
+      this.analyser.smoothingTimeConstant = 0.5; // Reduced from 0.8 for faster response
       
       // Connect microphone to analyser
       this.source = this.audioContext.createMediaStreamSource(this.stream);
@@ -145,7 +145,7 @@ export const mapFrequencyToHue = (frequency: number): number => {
 
 // Utility to map amplitude to motion intensity
 export const mapAmplitudeToIntensity = (amplitude: number): number => {
-  // Exponential scaling for better response
-  const scaled = Math.pow(amplitude, 0.7) * 10;
+  // More aggressive exponential scaling for dramatic response
+  const scaled = Math.pow(amplitude, 0.4) * 15; // Increased from 10 to 15, reduced exponent for more sensitivity
   return Math.min(10, scaled);
 };

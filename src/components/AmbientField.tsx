@@ -23,9 +23,9 @@ export const AmbientField = ({ motionIntensity, audioHue = 0, audioAmplitude = 0
   
   const animationSpeed = 8 - (motionIntensity * 0.5);
   
-  // Audio-reactive brightness and color shift
-  const audioBrightness = 0.6 + (audioAmplitude * 0.4);
-  const audioColorFilter = audioHue > 0 ? `hue-rotate(${audioHue}deg)` : 'none';
+  // Audio-reactive brightness and color shift - more dramatic
+  const audioBrightness = 0.5 + (audioAmplitude * 0.8); // Increased from 0.4 to 0.8 for more dramatic effect
+  const audioColorFilter = audioHue > 0 ? `hue-rotate(${audioHue}deg) saturate(${1 + audioAmplitude * 0.5})` : 'none';
   
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">

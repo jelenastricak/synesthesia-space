@@ -43,20 +43,20 @@ const Index = () => {
     if (!audioEnabled) {
       try {
         const visualizer = new AudioVisualizer((amplitude, frequency) => {
-          // Map amplitude to motion intensity
+          // Map amplitude to motion intensity - much more aggressive
           const intensity = mapAmplitudeToIntensity(amplitude);
-          setMotionIntensity(prev => Math.min(10, prev + intensity * 0.5));
+          setMotionIntensity(prev => Math.min(10, prev + intensity * 1.5)); // Increased from 0.5 to 1.5
           
           // Map frequency to color hue
           const hue = mapFrequencyToHue(frequency);
           setAudioHue(hue);
           
-          // Store amplitude for brightness
-          setAudioAmplitude(amplitude);
+          // Store amplitude for brightness - amplified effect
+          setAudioAmplitude(Math.min(1, amplitude * 2)); // Double the amplitude effect
           
-          // Increase interaction frequency based on audio level
-          if (amplitude > 0.1) {
-            setInteractionFrequency(prev => Math.min(10, prev + amplitude * 2));
+          // Increase interaction frequency based on audio level - more sensitive
+          if (amplitude > 0.05) { // Lowered threshold from 0.1 to 0.05
+            setInteractionFrequency(prev => Math.min(10, prev + amplitude * 4)); // Increased from 2 to 4
           }
         });
         

@@ -28,8 +28,8 @@ export const ReactiveOverlay = ({
       
       setMousePosition({ x: e.clientX, y: e.clientY });
       
-      // Play soft tone on hover (throttled)
-      if (Math.random() > 0.98) {
+      // Play soft tone on hover (throttled) - more frequent with audio enabled
+      if (Math.random() > 0.96) { // Lowered from 0.98 to 0.96 for more frequent sounds
         const frequency = 400 + Math.random() * 400; // 400-800Hz
         playSoftTone(frequency, 0.3);
       }
@@ -73,7 +73,7 @@ export const ReactiveOverlay = ({
     return () => clearInterval(interval);
   }, [motionIntensity, onMotionChange]);
   
-  const overlayOpacity = 0.1 + (interactionFrequency * 0.05);
+  const overlayOpacity = 0.15 + (interactionFrequency * 0.08); // Increased from 0.1 and 0.05 for more visible overlay
   
   return (
     <div className="fixed inset-0 pointer-events-none">

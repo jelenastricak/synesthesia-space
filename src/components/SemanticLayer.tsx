@@ -158,7 +158,7 @@ export const SemanticLayer = ({ interactionFrequency, onHover }: SemanticLayerPr
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       // Generate word on movement if frequency is high enough
-      if (interactionFrequency > 2 && words.length < 5 && Math.random() > 0.97) {
+      if (interactionFrequency > 2 && words.length < 5 && Math.random() > 0.95) { // Lowered from 0.97 to 0.95 for more frequent generation
         onHover();
         
         // Context-aware word selection: prefer words from underused clusters
