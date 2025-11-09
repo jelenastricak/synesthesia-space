@@ -152,6 +152,19 @@ const Index = () => {
           </Button>
           
           {audioEnabled && (
+            <span 
+              className="text-xs uppercase tracking-wider text-center animate-fade-in"
+              style={{ 
+                color: 'hsl(var(--aurora-cyan))',
+                opacity: 0.7,
+                textShadow: '0 0 10px hsl(var(--aurora-cyan) / 0.5)'
+              }}
+            >
+              Listening
+            </span>
+          )}
+          
+          {audioEnabled && (
             <Button
               onClick={() => setSpectrumVisible(!spectrumVisible)}
               variant={spectrumVisible ? "default" : "outline"}
