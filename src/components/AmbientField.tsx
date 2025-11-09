@@ -53,11 +53,11 @@ export const AmbientField = ({ motionIntensity, audioHue = 0, audioAmplitude = 0
         style={{
           background: listeningModeActive 
             ? `radial-gradient(circle at ${gradientPosition.x}% ${gradientPosition.y}%, 
-                hsla(${reactiveHue}, 85%, 60%, ${0.5 + audioAmplitude * 0.3}), 
-                hsl(var(--aurora-cyan) / 0.7) 20%, 
-                hsl(var(--aurora-blue) / 0.6) 40%, 
-                hsl(var(--aurora-purple) / 0.5) 65%,
-                hsl(var(--aurora-pink) / 0.3) 85%,
+                hsla(${reactiveHue}, 85%, 40%, ${0.5 + audioAmplitude * 0.3}), 
+                hsl(var(--aurora-cyan) / 0.5) 20%, 
+                hsl(var(--aurora-blue) / 0.4) 40%, 
+                hsl(var(--aurora-purple) / 0.35) 65%,
+                hsl(var(--aurora-pink) / 0.2) 85%,
                 transparent 100%)`
             : `radial-gradient(circle at ${gradientPosition.x}% ${gradientPosition.y}%, 
                 hsl(var(--aurora-teal) / 0.4), 
@@ -75,9 +75,9 @@ export const AmbientField = ({ motionIntensity, audioHue = 0, audioAmplitude = 0
         style={{
           background: listeningModeActive
             ? `radial-gradient(circle at ${100 - gradientPosition.x}% ${100 - gradientPosition.y}%, 
-                hsla(${reactiveHue2}, 80%, 65%, ${0.45 + audioAmplitude * 0.25}), 
-                hsl(var(--aurora-purple) / 0.5) 40%,
-                hsl(var(--aurora-teal) / 0.4) 70%, 
+                hsla(${reactiveHue2}, 80%, 45%, ${0.45 + audioAmplitude * 0.25}), 
+                hsl(var(--aurora-purple) / 0.35) 40%,
+                hsl(var(--aurora-teal) / 0.3) 70%, 
                 transparent 90%)`
             : `radial-gradient(circle at ${100 - gradientPosition.x}% ${100 - gradientPosition.y}%, 
                 hsl(var(--aurora-blue) / 0.3), 
@@ -94,7 +94,7 @@ export const AmbientField = ({ motionIntensity, audioHue = 0, audioAmplitude = 0
         className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-float transition-all duration-1000"
         style={{
           background: listeningModeActive 
-            ? `hsla(${reactiveHue}, 80%, 60%, ${0.4 + audioAmplitude * 0.4})` 
+            ? `hsla(${reactiveHue}, 80%, 40%, ${0.4 + audioAmplitude * 0.4})` 
             : 'hsl(var(--aurora-purple) / 0.2)',
           animationDelay: '0s',
           opacity: listeningModeActive ? 0.8 : 0.5,
@@ -105,7 +105,7 @@ export const AmbientField = ({ motionIntensity, audioHue = 0, audioAmplitude = 0
         className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl animate-float transition-all duration-1000"
         style={{
           background: listeningModeActive 
-            ? `hsla(${reactiveHue2}, 80%, 65%, ${0.4 + audioAmplitude * 0.4})` 
+            ? `hsla(${reactiveHue2}, 80%, 45%, ${0.4 + audioAmplitude * 0.4})` 
             : 'hsl(var(--aurora-teal) / 0.2)',
           animationDelay: '2s',
           opacity: listeningModeActive ? 0.8 : 0.5,
@@ -118,7 +118,7 @@ export const AmbientField = ({ motionIntensity, audioHue = 0, audioAmplitude = 0
         <div 
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl animate-pulse"
           style={{
-            background: `radial-gradient(circle, hsla(${reactiveHue2}, 85%, 65%, ${0.25 + audioAmplitude * 0.35}), transparent 70%)`,
+            background: `radial-gradient(circle, hsla(${reactiveHue2}, 85%, 45%, ${0.25 + audioAmplitude * 0.35}), transparent 70%)`,
             animationDuration: `${Math.max(1.2, 3 - audioAmplitude * 1.5)}s`,
           }}
         />
