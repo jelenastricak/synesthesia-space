@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 
 interface AmbientFieldProps {
   motionIntensity: number;
+  audioHue?: number;
+  audioAmplitude?: number;
 }
 
-export const AmbientField = ({ motionIntensity }: AmbientFieldProps) => {
+export const AmbientField = ({ motionIntensity, audioHue = 0, audioAmplitude = 0 }: AmbientFieldProps) => {
   const [gradientPosition, setGradientPosition] = useState({ x: 50, y: 50 });
   
   useEffect(() => {
@@ -21,11 +23,15 @@ export const AmbientField = ({ motionIntensity }: AmbientFieldProps) => {
   
   const animationSpeed = 8 - (motionIntensity * 0.5);
   
+  // Audio-reactive brightness and color shift
+  const audioBrightness = 0.6 + (audioAmplitude * 0.4);
+  const audioColorFilter = audioHue > 0 ? `hue-rotate(${audioHue}deg)` : 'none';
+  
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
       {/* Base aurora gradient layer */}
       <div 
-        className="absolute inset-0 animate-breathe opacity-60"
+        className="absolute inset-0 animate-breathe transition-all duration-300"
         style={{
           background: `radial-gradient(circle at ${gradientPosition.x}% ${gradientPosition.y}%, 
             hsl(var(--aurora-teal) / 0.4), 
@@ -33,12 +39,14 @@ export const AmbientField = ({ motionIntensity }: AmbientFieldProps) => {
             hsl(var(--aurora-pink) / 0.2) 70%,
             transparent 100%)`,
           animationDuration: `${animationSpeed}s`,
+          opacity: audioBrightness,
+          filter: audioColorFilter,
         }}
       />
       
       {/* Secondary gradient layer */}
       <div 
-        className="absolute inset-0 animate-breathe opacity-50"
+        className="absolute inset-0 animate-breathe transition-all duration-300"
         style={{
           background: `radial-gradient(circle at ${100 - gradientPosition.x}% ${100 - gradientPosition.y}%, 
             hsl(var(--aurora-blue) / 0.3), 
@@ -46,6 +54,8 @@ export const AmbientField = ({ motionIntensity }: AmbientFieldProps) => {
             transparent 90%)`,
           animationDuration: `${animationSpeed + 2}s`,
           animationDelay: '1s',
+          opacity: audioBrightness * 0.8,
+          filter: audioColorFilter,
         }}
       />
       
