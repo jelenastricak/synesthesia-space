@@ -133,7 +133,18 @@ const Index = () => {
       {/* Audio Visualization Toggle */}
       {contextState !== 'intro' && (
         <div className="fixed bottom-8 right-8 z-50 flex flex-col gap-3">
-          <Button
+          <div className="relative">
+            {audioEnabled && (
+              <div 
+                className="absolute inset-0 rounded-full animate-pulse"
+                style={{
+                  background: 'hsl(var(--aurora-cyan) / 0.2)',
+                  border: '2px solid hsl(var(--aurora-cyan) / 0.4)',
+                  animation: 'pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                }}
+              />
+            )}
+            <Button
             onClick={toggleAudioVisualization}
             variant={audioEnabled ? "default" : "outline"}
             size="icon"
@@ -149,7 +160,8 @@ const Index = () => {
             ) : (
               <MicOff className="w-6 h-6" />
             )}
-          </Button>
+            </Button>
+          </div>
           
           {audioEnabled && (
             <span 
