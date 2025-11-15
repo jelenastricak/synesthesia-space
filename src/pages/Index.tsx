@@ -1,14 +1,15 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import html2canvas from 'html2canvas';
+import { Mic, MicOff, BarChart3, Camera } from 'lucide-react';
+
 import { AmbientField } from '@/components/AmbientField';
 import { ReactiveOverlay } from '@/components/ReactiveOverlay';
 import { SemanticLayer } from '@/components/SemanticLayer';
 import { StateManager } from '@/components/StateManager';
 import { SpectrumVisualizer } from '@/components/SpectrumVisualizer';
-import { AudioVisualizer, mapFrequencyToHue, mapAmplitudeToIntensity } from '@/lib/audioVisualization';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, BarChart3, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import html2canvas from 'html2canvas';
+import { AudioVisualizer, mapFrequencyToHue, mapAmplitudeToIntensity } from '@/lib/audioVisualization';
 
 type ContextState = 'intro' | 'active' | 'immersive' | 'reflection';
 
