@@ -25,8 +25,11 @@ const Index = () => {
   const [spectrumVisible, setSpectrumVisible] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [autoCaptureEnabled, setAutoCaptureEnabled] = useState(false);
+  const [lastCaptureTime, setLastCaptureTime] = useState(0);
   const visualizerRef = useRef<AudioVisualizer | null>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const peakDetectionRef = useRef({ recentPeaks: [] as number[], threshold: 0.7 });
   
   const handleInteraction = useCallback(() => {
     setInteractionFrequency(prev => Math.min(10, prev + 1));
@@ -157,6 +160,63 @@ const Index = () => {
     }
   }, [toast]);
   
+  // Auto-capture detection based on peaks
+  useEffect(() => {
+    if (!autoCaptureEnabled || !audioEnabled) return;
+
+    const detectPeak = () => {
+      // Calculate composite intensity score (0-1)
+      const audioScore = audioAmplitude; // 0-1
+      const motionScore = Math.min(1, motionIntensity / 10); // normalize to 0-1
+      const interactionScore = Math.min(1, interactionFrequency / 10); // normalize to 0-1
+      
+      // Weighted composite score (audio has most weight)
+      const compositeScore = (audioScore * 0.5) + (motionScore * 0.3) + (interactionScore * 0.2);
+      
+      // Track recent peaks for adaptive threshold
+      const peaks = peakDetectionRef.current.recentPeaks;
+      peaks.push(compositeScore);
+      if (peaks.length > 50) peaks.shift(); // Keep last 50 samples
+      
+      // Calculate dynamic threshold (average of recent peaks + buffer)
+      const avgPeak = peaks.reduce((a, b) => a + b, 0) / peaks.length;
+      const dynamicThreshold = Math.max(0.65, Math.min(0.85, avgPeak + 0.15));
+      
+      // Check cooldown period (minimum 5 seconds between captures)
+      const now = Date.now();
+      const timeSinceLastCapture = now - lastCaptureTime;
+      const cooldownPeriod = 5000; // 5 seconds
+      
+      // Detect peak: high composite score, above threshold, and cooldown expired
+      const isPeak = compositeScore > dynamicThreshold && timeSinceLastCapture > cooldownPeriod;
+      
+      // Additional condition: significant change from baseline
+      const isSignificantMoment = audioAmplitude > 0.7 || (motionIntensity > 7 && interactionFrequency > 6);
+      
+      if (isPeak && isSignificantMoment) {
+        console.log('Peak detected!', { 
+          compositeScore: compositeScore.toFixed(2), 
+          threshold: dynamicThreshold.toFixed(2),
+          audio: audioAmplitude.toFixed(2),
+          motion: motionIntensity.toFixed(2),
+        });
+        
+        setLastCaptureTime(now);
+        captureScreenshot();
+        
+        toast({
+          title: "Auto-Captured",
+          description: "Peak visual moment detected and captured",
+          duration: 2000,
+        });
+      }
+    };
+
+    // Check for peaks every 500ms
+    const interval = setInterval(detectPeak, 500);
+    return () => clearInterval(interval);
+  }, [autoCaptureEnabled, audioEnabled, audioAmplitude, motionIntensity, interactionFrequency, lastCaptureTime, captureScreenshot, toast]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -225,19 +285,75 @@ const Index = () => {
             <ImageIcon className="w-6 h-6" />
           </Button>
           
-          <Button
-            onClick={captureScreenshot}
-            variant="outline"
-            size="icon"
-            className="w-14 h-14 rounded-full shadow-lg transition-all duration-300"
-            style={{
-              background: 'hsl(var(--background) / 0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid hsl(var(--border))',
-            }}
-          >
-            <Camera className="w-6 h-6" />
-          </Button>
+          {audioEnabled && (
+            <div className="relative">
+              {autoCaptureEnabled && (
+                <div 
+                  className="absolute inset-0 rounded-full animate-pulse"
+                  style={{
+                    background: 'hsl(var(--aurora-pink) / 0.2)',
+                    border: '2px solid hsl(var(--aurora-pink) / 0.4)',
+                    animation: 'pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                  }}
+                />
+              )}
+              <Button
+                onClick={() => {
+                  setAutoCaptureEnabled(!autoCaptureEnabled);
+                  toast({
+                    title: autoCaptureEnabled ? "Auto-Capture Disabled" : "Auto-Capture Enabled",
+                    description: autoCaptureEnabled 
+                      ? "Manual capture only" 
+                      : "Will capture peak visual moments automatically",
+                  });
+                }}
+                variant={autoCaptureEnabled ? "default" : "outline"}
+                size="icon"
+                className="w-14 h-14 rounded-full shadow-lg transition-all duration-300 animate-fadeInBlur"
+                style={{
+                  background: autoCaptureEnabled ? 'hsl(var(--aurora-pink) / 0.3)' : 'hsl(var(--background) / 0.8)',
+                  backdropFilter: 'blur(10px)',
+                  border: autoCaptureEnabled ? '2px solid hsl(var(--aurora-pink))' : '1px solid hsl(var(--border))',
+                }}
+              >
+                <Camera 
+                  className="w-6 h-6" 
+                  style={{ 
+                    color: autoCaptureEnabled ? 'hsl(var(--aurora-pink))' : 'hsl(var(--foreground))',
+                  }} 
+                />
+              </Button>
+            </div>
+          )}
+          
+          {!audioEnabled && (
+            <Button
+              onClick={captureScreenshot}
+              variant="outline"
+              size="icon"
+              className="w-14 h-14 rounded-full shadow-lg transition-all duration-300"
+              style={{
+                background: 'hsl(var(--background) / 0.8)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid hsl(var(--border))',
+              }}
+            >
+              <Camera className="w-6 h-6" />
+            </Button>
+          )}
+          
+          {autoCaptureEnabled && (
+            <span 
+              className="text-xs uppercase tracking-wider text-center animate-fade-in"
+              style={{ 
+                color: 'hsl(var(--aurora-pink))',
+                opacity: 0.7,
+                textShadow: '0 0 10px hsl(var(--aurora-pink) / 0.5)'
+              }}
+            >
+              Auto
+            </span>
+          )}
           
           <div className="relative">
             {audioEnabled && (
