@@ -1,12 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import { Mic, MicOff, BarChart3, Camera } from 'lucide-react';
+import { Mic, MicOff, BarChart3, Camera, Image as ImageIcon } from 'lucide-react';
 
 import { AmbientField } from '@/components/AmbientField';
 import { ReactiveOverlay } from '@/components/ReactiveOverlay';
 import { SemanticLayer } from '@/components/SemanticLayer';
 import { StateManager } from '@/components/StateManager';
 import { SpectrumVisualizer } from '@/components/SpectrumVisualizer';
+import { ScreenshotGallery, saveScreenshot } from '@/components/ScreenshotGallery';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { AudioVisualizer, mapFrequencyToHue, mapAmplitudeToIntensity } from '@/lib/audioVisualization';
@@ -23,6 +24,7 @@ const Index = () => {
   const [audioAmplitude, setAudioAmplitude] = useState(0);
   const [spectrumVisible, setSpectrumVisible] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const visualizerRef = useRef<AudioVisualizer | null>(null);
   const mainRef = useRef<HTMLElement>(null);
   
@@ -111,23 +113,36 @@ const Index = () => {
         logging: false,
       });
       
-      // Convert to blob and download
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-          link.download = `aurora-capture-${timestamp}.png`;
-          link.href = url;
-          link.click();
-          URL.revokeObjectURL(url);
-          
-          toast({
-            title: "Screenshot Captured",
-            description: "Your visualization has been saved as a PNG image",
-          });
-        }
-      }, 'image/png');
+      // Convert to data URL and save to gallery
+      const dataUrl = canvas.toDataURL('image/png');
+      const saved = saveScreenshot(dataUrl);
+      
+      if (saved) {
+        toast({
+          title: "Screenshot Captured",
+          description: "Saved to gallery and downloaded",
+        });
+        
+        // Also download the image
+        const link = document.createElement('a');
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        link.download = `aurora-capture-${timestamp}.png`;
+        link.href = dataUrl;
+        link.click();
+      } else {
+        toast({
+          title: "Screenshot Saved",
+          description: "Downloaded but couldn't save to gallery (storage full)",
+          variant: "destructive",
+        });
+        
+        // Still download even if gallery save fails
+        const link = document.createElement('a');
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        link.download = `aurora-capture-${timestamp}.png`;
+        link.href = dataUrl;
+        link.click();
+      }
       
       // Hide flash after a brief moment
       setTimeout(() => setShowFlash(false), 300);
@@ -190,9 +205,26 @@ const Index = () => {
         />
       )}
       
+      {/* Screenshot Gallery */}
+      <ScreenshotGallery isOpen={galleryOpen} onClose={() => setGalleryOpen(false)} />
+      
       {/* Audio Visualization Toggle */}
       {contextState !== 'intro' && (
         <div className="fixed bottom-8 right-8 z-50 flex flex-col gap-3">
+          <Button
+            onClick={() => setGalleryOpen(true)}
+            variant="outline"
+            size="icon"
+            className="w-14 h-14 rounded-full shadow-lg transition-all duration-300"
+            style={{
+              background: 'hsl(var(--background) / 0.8)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid hsl(var(--border))',
+            }}
+          >
+            <ImageIcon className="w-6 h-6" />
+          </Button>
+          
           <Button
             onClick={captureScreenshot}
             variant="outline"
