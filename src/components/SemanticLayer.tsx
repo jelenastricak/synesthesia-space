@@ -17,51 +17,95 @@ interface SemanticLayerProps {
 const WORD_CLUSTERS = {
   light: [
     'luminous', 'radiate', 'shimmer', 'glow', 'illuminate', 'gleam', 'sparkle',
-    'glimmer', 'incandescent', 'phosphorescent', 'prismatic', 'iridescent', 'opalescent'
+    'glimmer', 'incandescent', 'phosphorescent', 'prismatic', 'iridescent', 'opalescent',
+    'lambent', 'coruscate', 'scintillate', 'effulgent', 'refulgent', 'lucent', 'nitid'
   ],
   motion: [
     'float', 'drift', 'cascade', 'ripple', 'flow', 'surge', 'spiral', 'swirl',
-    'undulate', 'oscillate', 'revolve', 'orbit', 'gyrate', 'meander', 'wander'
+    'undulate', 'oscillate', 'revolve', 'orbit', 'gyrate', 'meander', 'wander',
+    'peregrinate', 'circumambulate', 'eddy', 'pirouette', 'levitate', 'billow'
   ],
   transformation: [
     'transcend', 'bloom', 'dissolve', 'emerge', 'evolve', 'morph', 'transmute',
-    'metamorphose', 'unfold', 'crystallize', 'coalesce', 'fragment', 'disperse'
+    'metamorphose', 'unfold', 'crystallize', 'coalesce', 'fragment', 'disperse',
+    'transmogrify', 'sublimate', 'effloresce', 'transubstantiate', 'alchemize'
   ],
   resonance: [
     'echo', 'resonate', 'harmonize', 'vibrate', 'pulse', 'hum', 'reverberate',
-    'oscillate', 'frequency', 'wavelength', 'amplitude', 'cadence', 'rhythm'
+    'oscillate', 'frequency', 'wavelength', 'amplitude', 'cadence', 'rhythm',
+    'susurrate', 'dulcet', 'mellifluous', 'sonorous', 'sibilant', 'euphonious'
   ],
   essence: [
     'breathe', 'whisper', 'embrace', 'essence', 'aura', 'spirit', 'soul',
-    'quintessence', 'ethereal', 'ephemeral', 'transient', 'fleeting', 'momentary'
+    'quintessence', 'ethereal', 'ephemeral', 'transient', 'fleeting', 'momentary',
+    'numinous', 'ineffable', 'liminal', 'anima', 'pneuma', 'quiddity'
   ],
   cosmic: [
     'celestial', 'stellar', 'nebula', 'cosmos', 'infinite', 'eternal', 'astral',
-    'galactic', 'void', 'expanse', 'universe', 'constellation', 'aurora'
+    'galactic', 'void', 'expanse', 'universe', 'constellation', 'aurora',
+    'sidereal', 'firmament', 'empyrean', 'aphelion', 'perihelion', 'zenith'
   ],
   connection: [
     'merge', 'converge', 'intertwine', 'weave', 'fuse', 'unite', 'synthesize',
-    'integrate', 'harmonize', 'synchronize', 'attune', 'align', 'resonate'
+    'integrate', 'harmonize', 'synchronize', 'attune', 'align', 'resonate',
+    'concatenate', 'conflate', 'commingle', 'interpenetrate', 'entwine'
   ],
   perception: [
     'witness', 'observe', 'perceive', 'sense', 'feel', 'experience', 'discover',
-    'unveil', 'reveal', 'manifest', 'emerge', 'appear', 'materialize'
+    'unveil', 'reveal', 'manifest', 'emerge', 'appear', 'materialize',
+    'apperceive', 'intuit', 'discern', 'apprehend', 'cognize', 'proprioceive'
   ],
   emotion: [
     'flutter', 'tremble', 'quiver', 'shiver', 'thrill', 'stir', 'kindle',
-    'ignite', 'awaken', 'inspire', 'enchant', 'mesmerize', 'captivate'
+    'ignite', 'awaken', 'inspire', 'enchant', 'mesmerize', 'captivate',
+    'beguile', 'enrapture', 'enthrall', 'bewitch', 'ravish', 'transport'
   ],
   nature: [
     'verdant', 'flourish', 'blossom', 'germinate', 'cultivate', 'nurture', 'grow',
-    'harvest', 'wither', 'decay', 'renew', 'regenerate', 'rebirth'
+    'harvest', 'wither', 'decay', 'renew', 'regenerate', 'rebirth',
+    'sylvan', 'arboreal', 'riparian', 'pelagic', 'boreal', 'telluric'
   ],
   texture: [
     'velvet', 'silk', 'gossamer', 'crystalline', 'liquid', 'vaporous', 'ethereal',
-    'tangible', 'palpable', 'delicate', 'gossamer', 'diaphanous', 'translucent'
+    'tangible', 'palpable', 'delicate', 'gossamer', 'diaphanous', 'translucent',
+    'nacreous', 'vitreous', 'pellucid', 'tenuous', 'gossamer', 'filamentous'
   ],
   time: [
     'linger', 'suspend', 'pause', 'halt', 'freeze', 'accelerate', 'decelerate',
-    'eternal', 'temporal', 'timeless', 'perpetual', 'infinite', 'endless'
+    'eternal', 'temporal', 'timeless', 'perpetual', 'infinite', 'endless',
+    'sempiternal', 'aeonian', 'diurnal', 'crepuscular', 'vespertine', 'matutinal'
+  ],
+  obscure: [
+    'petrichor', 'vellichor', 'sonder', 'kenopsia', 'chrysalism', 'liberosis',
+    'occhiolism', 'rubatosis', 'altschmerz', 'jouska', 'ellipsism', 'gnossienne'
+  ],
+  arcane: [
+    'thaumaturgy', 'apotropaic', 'chthonic', 'eldritch', 'wyrd', 'numinous',
+    'hierophantic', 'orphic', 'hermetic', 'gnostic', 'theurgic', 'lambent'
+  ],
+  liquid: [
+    'aqueous', 'fluvial', 'pluvial', 'rivulet', 'deluge', 'torrent', 'freshet',
+    'cataract', 'confluence', 'estuary', 'littoral', 'lacustrine', 'thalassic'
+  ],
+  atmosphere: [
+    'zephyr', 'mistral', 'sirocco', 'doldrums', 'miasma', 'nimbus', 'cumulus',
+    'stratus', 'cirrus', 'nebulous', 'brume', 'haar', 'scotomize'
+  ],
+  sacred: [
+    'sanctum', 'numen', 'hieratic', 'sacrosanct', 'consecrate', 'hallow',
+    'beatific', 'seraphic', 'cherubic', 'celestine', 'hallowed', 'sacral'
+  ],
+  shadow: [
+    'umbra', 'penumbra', 'tenebrous', 'crepuscule', 'gloaming', 'twilight',
+    'eventide', 'dusk', 'vesper', 'darkling', 'obscura', 'stygian'
+  ],
+  memory: [
+    'palimpsest', 'anamnesis', 'vestige', 'remnant', 'trace', 'imprint',
+    'engram', 'reverie', 'phantasm', 'spectre', 'wraith', 'eidolon'
+  ],
+  silence: [
+    'taciturn', 'quiescent', 'reticent', 'laconic', 'stillness', 'hush',
+    'quietude', 'muteness', 'tacet', 'sotto', 'pianissimo', 'attacca'
   ]
 };
 
