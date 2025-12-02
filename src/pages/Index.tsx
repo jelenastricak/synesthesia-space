@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import { Mic, MicOff, BarChart3, Camera, Image as ImageIcon } from 'lucide-react';
+import { Mic, MicOff, BarChart3, Camera, Image as ImageIcon, Sparkles } from 'lucide-react';
 
 import { AmbientField } from '@/components/AmbientField';
 import { ReactiveOverlay } from '@/components/ReactiveOverlay';
@@ -8,6 +8,7 @@ import { SemanticLayer } from '@/components/SemanticLayer';
 import { StateManager } from '@/components/StateManager';
 import { SpectrumVisualizer } from '@/components/SpectrumVisualizer';
 import { ScreenshotGallery, saveScreenshot } from '@/components/ScreenshotGallery';
+import { HaikuGenerator } from '@/components/HaikuGenerator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { AudioVisualizer, mapFrequencyToHue, mapAmplitudeToIntensity } from '@/lib/audioVisualization';
@@ -35,6 +36,7 @@ const Index = () => {
   const [autoCaptureEnabled, setAutoCaptureEnabled] = useState(false);
   const [lastCaptureTime, setLastCaptureTime] = useState(0);
   const [sensitivityMode, setSensitivityMode] = useState<SensitivityMode>('balanced');
+  const [haikuOpen, setHaikuOpen] = useState(false);
   const visualizerRef = useRef<AudioVisualizer | null>(null);
   const mainRef = useRef<HTMLElement>(null);
   const peakDetectionRef = useRef({ recentPeaks: [] as number[], threshold: 0.7 });
@@ -291,9 +293,26 @@ const Index = () => {
       {/* Screenshot Gallery */}
       <ScreenshotGallery isOpen={galleryOpen} onClose={() => setGalleryOpen(false)} />
       
+      {/* Haiku Generator */}
+      <HaikuGenerator isVisible={haikuOpen} onClose={() => setHaikuOpen(false)} />
+      
       {/* Audio Visualization Toggle */}
       {contextState !== 'intro' && (
         <div className="fixed bottom-8 right-8 z-50 flex flex-col gap-3">
+          <Button
+            onClick={() => setHaikuOpen(true)}
+            variant="outline"
+            size="icon"
+            className="w-14 h-14 rounded-full shadow-lg transition-all duration-300"
+            style={{
+              background: 'hsl(var(--background) / 0.8)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid hsl(var(--border))',
+            }}
+          >
+            <Sparkles className="w-6 h-6" style={{ color: 'hsl(var(--aurora-pink))' }} />
+          </Button>
+          
           <Button
             onClick={() => setGalleryOpen(true)}
             variant="outline"
