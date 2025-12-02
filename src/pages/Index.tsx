@@ -13,6 +13,13 @@ import { useToast } from '@/hooks/use-toast';
 import { AudioVisualizer, mapFrequencyToHue, mapAmplitudeToIntensity } from '@/lib/audioVisualization';
 
 type ContextState = 'intro' | 'active' | 'immersive' | 'reflection';
+type SensitivityMode = 'subtle' | 'balanced' | 'explosive';
+
+const SENSITIVITY_PRESETS = {
+  subtle: { threshold: 0.85, cooldown: 8000, label: 'Subtle', description: 'Rare captures' },
+  balanced: { threshold: 0.7, cooldown: 5000, label: 'Balanced', description: 'Moderate captures' },
+  explosive: { threshold: 0.55, cooldown: 3000, label: 'Explosive', description: 'Frequent captures' },
+};
 
 const Index = () => {
   const { toast } = useToast();
@@ -27,6 +34,7 @@ const Index = () => {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [autoCaptureEnabled, setAutoCaptureEnabled] = useState(false);
   const [lastCaptureTime, setLastCaptureTime] = useState(0);
+  const [sensitivityMode, setSensitivityMode] = useState<SensitivityMode>('balanced');
   const visualizerRef = useRef<AudioVisualizer | null>(null);
   const mainRef = useRef<HTMLElement>(null);
   const peakDetectionRef = useRef({ recentPeaks: [] as number[], threshold: 0.7 });
@@ -164,6 +172,8 @@ const Index = () => {
   useEffect(() => {
     if (!autoCaptureEnabled || !audioEnabled) return;
 
+    const preset = SENSITIVITY_PRESETS[sensitivityMode];
+    
     const detectPeak = () => {
       // Calculate composite intensity score (0-1)
       const audioScore = audioAmplitude; // 0-1
@@ -178,20 +188,20 @@ const Index = () => {
       peaks.push(compositeScore);
       if (peaks.length > 50) peaks.shift(); // Keep last 50 samples
       
-      // Calculate dynamic threshold (average of recent peaks + buffer)
+      // Calculate dynamic threshold based on preset
       const avgPeak = peaks.reduce((a, b) => a + b, 0) / peaks.length;
-      const dynamicThreshold = Math.max(0.65, Math.min(0.85, avgPeak + 0.15));
+      const dynamicThreshold = Math.max(preset.threshold - 0.1, Math.min(preset.threshold + 0.1, avgPeak + 0.1));
       
-      // Check cooldown period (minimum 5 seconds between captures)
+      // Check cooldown period based on preset
       const now = Date.now();
       const timeSinceLastCapture = now - lastCaptureTime;
-      const cooldownPeriod = 5000; // 5 seconds
       
       // Detect peak: high composite score, above threshold, and cooldown expired
-      const isPeak = compositeScore > dynamicThreshold && timeSinceLastCapture > cooldownPeriod;
+      const isPeak = compositeScore > dynamicThreshold && timeSinceLastCapture > preset.cooldown;
       
-      // Additional condition: significant change from baseline
-      const isSignificantMoment = audioAmplitude > 0.7 || (motionIntensity > 7 && interactionFrequency > 6);
+      // Adjust significance threshold based on sensitivity
+      const significanceThreshold = sensitivityMode === 'explosive' ? 0.5 : sensitivityMode === 'subtle' ? 0.8 : 0.7;
+      const isSignificantMoment = audioAmplitude > significanceThreshold || (motionIntensity > (10 - significanceThreshold * 5) && interactionFrequency > (10 - significanceThreshold * 5));
       
       if (isPeak && isSignificantMoment) {
         console.log('Peak detected!', { 
@@ -215,7 +225,7 @@ const Index = () => {
     // Check for peaks every 500ms
     const interval = setInterval(detectPeak, 500);
     return () => clearInterval(interval);
-  }, [autoCaptureEnabled, audioEnabled, audioAmplitude, motionIntensity, interactionFrequency, lastCaptureTime, captureScreenshot, toast]);
+  }, [autoCaptureEnabled, audioEnabled, audioAmplitude, motionIntensity, interactionFrequency, lastCaptureTime, captureScreenshot, toast, sensitivityMode]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -343,16 +353,39 @@ const Index = () => {
           )}
           
           {autoCaptureEnabled && (
-            <span 
-              className="text-xs uppercase tracking-wider text-center animate-fade-in"
-              style={{ 
-                color: 'hsl(var(--aurora-pink))',
-                opacity: 0.7,
-                textShadow: '0 0 10px hsl(var(--aurora-pink) / 0.5)'
-              }}
-            >
-              Auto
-            </span>
+            <div className="flex flex-col items-center gap-1 animate-fade-in">
+              <span 
+                className="text-xs uppercase tracking-wider text-center"
+                style={{ 
+                  color: 'hsl(var(--aurora-pink))',
+                  opacity: 0.7,
+                  textShadow: '0 0 10px hsl(var(--aurora-pink) / 0.5)'
+                }}
+              >
+                Auto
+              </span>
+              <button
+                onClick={() => {
+                  const modes: SensitivityMode[] = ['subtle', 'balanced', 'explosive'];
+                  const currentIndex = modes.indexOf(sensitivityMode);
+                  const nextMode = modes[(currentIndex + 1) % modes.length];
+                  setSensitivityMode(nextMode);
+                  toast({
+                    title: `${SENSITIVITY_PRESETS[nextMode].label} Mode`,
+                    description: SENSITIVITY_PRESETS[nextMode].description,
+                    duration: 2000,
+                  });
+                }}
+                className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full transition-all hover:scale-105"
+                style={{ 
+                  color: 'hsl(var(--aurora-pink))',
+                  background: 'hsl(var(--aurora-pink) / 0.1)',
+                  border: '1px solid hsl(var(--aurora-pink) / 0.3)',
+                }}
+              >
+                {SENSITIVITY_PRESETS[sensitivityMode].label}
+              </button>
+            </div>
           )}
           
           <div className="relative">
