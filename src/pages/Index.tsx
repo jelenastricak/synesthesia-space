@@ -117,11 +117,24 @@ const Index = () => {
       // Wait a brief moment for the flash to be visible
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Capture the screenshot
+      // Capture the screenshot with improved settings for CSS effects
       const canvas = await html2canvas(mainRef.current, {
-        backgroundColor: null,
-        scale: 2, // Higher quality
+        backgroundColor: '#000000',
+        scale: window.devicePixelRatio || 2,
         logging: false,
+        useCORS: true,
+        allowTaint: true,
+        imageTimeout: 0,
+        onclone: (clonedDoc) => {
+          // Force render blur effects as solid colors in clone
+          const blurredElements = clonedDoc.querySelectorAll('[class*="blur"]');
+          blurredElements.forEach((el) => {
+            if (el instanceof HTMLElement) {
+              el.style.filter = 'none';
+              el.style.backdropFilter = 'none';
+            }
+          });
+        },
       });
       
       // Convert to data URL and save to gallery
