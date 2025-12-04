@@ -12,6 +12,7 @@ import { HaikuGenerator } from '@/components/HaikuGenerator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { AudioVisualizer, mapFrequencyToHue, mapAmplitudeToIntensity } from '@/lib/audioVisualization';
+import { supabase } from '@/integrations/supabase/client';
 
 type ContextState = 'intro' | 'active' | 'immersive' | 'reflection';
 type SensitivityMode = 'subtle' | 'balanced' | 'explosive';
@@ -37,9 +38,50 @@ const Index = () => {
   const [lastCaptureTime, setLastCaptureTime] = useState(0);
   const [sensitivityMode, setSensitivityMode] = useState<SensitivityMode>('balanced');
   const [haikuOpen, setHaikuOpen] = useState(false);
+  const [backgroundHaiku, setBackgroundHaiku] = useState<string | null>(null);
+  const [lastHaikuTime, setLastHaikuTime] = useState(0);
   const visualizerRef = useRef<AudioVisualizer | null>(null);
   const mainRef = useRef<HTMLElement>(null);
   const peakDetectionRef = useRef({ recentPeaks: [] as number[], threshold: 0.7 });
+
+  // Generate haiku for background display
+  const generateBackgroundHaiku = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-haiku', {
+        body: {}
+      });
+
+      if (!error && data?.haiku) {
+        setBackgroundHaiku(data.haiku);
+        setLastHaikuTime(Date.now());
+      }
+    } catch (error) {
+      console.error('Background haiku generation error:', error);
+    }
+  }, []);
+
+  // Periodically generate haikus when audio is active
+  useEffect(() => {
+    if (!audioEnabled) return;
+
+    // Generate initial haiku after a delay
+    const initialTimer = setTimeout(() => {
+      generateBackgroundHaiku();
+    }, 10000);
+
+    // Generate new haiku every 45-90 seconds
+    const interval = setInterval(() => {
+      const timeSinceLastHaiku = Date.now() - lastHaikuTime;
+      if (timeSinceLastHaiku > 45000) {
+        generateBackgroundHaiku();
+      }
+    }, 30000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+    };
+  }, [audioEnabled, lastHaikuTime, generateBackgroundHaiku]);
   
   const handleInteraction = useCallback(() => {
     setInteractionFrequency(prev => Math.min(10, prev + 1));
@@ -272,6 +314,7 @@ const Index = () => {
         <SemanticLayer 
           interactionFrequency={interactionFrequency}
           onHover={handleInteraction}
+          displayHaiku={backgroundHaiku}
         />
       )}
       

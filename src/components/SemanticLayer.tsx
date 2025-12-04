@@ -6,11 +6,13 @@ interface Word {
   x: number;
   y: number;
   opacity: number;
+  isHaiku?: boolean;
 }
 
 interface SemanticLayerProps {
   interactionFrequency: number;
   onHover: () => void;
+  displayHaiku?: string | null;
 }
 
 // Thematic word clusters for context-aware generation
@@ -179,12 +181,56 @@ const selectContextualWords = (recentWords: string[]): string[] => {
   return clusteredWords.length >= 2 ? clusteredWords.slice(0, 3) : recentWords.slice(0, 3);
 };
 
-export const SemanticLayer = ({ interactionFrequency, onHover }: SemanticLayerProps) => {
+export const SemanticLayer = ({ interactionFrequency, onHover, displayHaiku }: SemanticLayerProps) => {
   const [words, setWords] = useState<Word[]>([]);
   const [phraseMode, setPhraseMode] = useState(false);
   const [generatedPhrase, setGeneratedPhrase] = useState('');
   const [usedClusters, setUsedClusters] = useState<string[]>([]);
   const [interactionPattern, setInteractionPattern] = useState<'meditative' | 'kinetic' | 'poetic' | 'rhythmic'>('meditative');
+  const [displayedHaiku, setDisplayedHaiku] = useState<string | null>(null);
+
+  // Display haiku when passed from parent
+  useEffect(() => {
+    if (displayHaiku && displayHaiku !== displayedHaiku) {
+      setDisplayedHaiku(displayHaiku);
+      
+      // Add haiku lines as floating words
+      const lines = displayHaiku.split('\n').filter(l => l.trim());
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      lines.forEach((line, index) => {
+        setTimeout(() => {
+          // Position haiku lines in different areas
+          const x = viewportWidth * (0.15 + Math.random() * 0.5);
+          const y = viewportHeight * (0.2 + (index * 0.2) + Math.random() * 0.1);
+          
+          const newWord: Word = {
+            id: Date.now() + index,
+            text: line.trim(),
+            x,
+            y,
+            opacity: 0,
+            isHaiku: true,
+          };
+          
+          setWords(prev => [...prev, newWord]);
+          
+          // Fade in
+          setTimeout(() => {
+            setWords(prev => prev.map(w => 
+              w.id === newWord.id ? { ...w, opacity: 1 } : w
+            ));
+          }, 100);
+          
+          // Longer display time for haiku lines
+          setTimeout(() => {
+            setWords(prev => prev.filter(w => w.id !== newWord.id));
+          }, 15000);
+        }, index * 800); // Stagger each line
+      });
+    }
+  }, [displayHaiku, displayedHaiku]);
   
   // Track interaction patterns
   useEffect(() => {
@@ -304,18 +350,22 @@ export const SemanticLayer = ({ interactionFrequency, onHover }: SemanticLayerPr
   
   return (
     <div className="fixed inset-0 pointer-events-none">
-      {/* Individual words */}
+      {/* Individual words and haiku lines */}
       {words.map(word => (
         <div
           key={word.id}
           onClick={() => handleWordClick(word.id)}
-          className="absolute text-2xl font-light tracking-widest cursor-pointer pointer-events-auto transition-all duration-1500"
+          className={`absolute font-light tracking-widest cursor-pointer pointer-events-auto transition-all duration-1500 ${
+            word.isHaiku ? 'text-xl md:text-2xl italic' : 'text-2xl'
+          }`}
           style={{
             left: word.x,
             top: word.y,
             opacity: word.opacity,
             color: 'hsl(var(--foreground))',
-            textShadow: '0 0 20px hsl(var(--aurora-cyan) / 0.6)',
+            textShadow: word.isHaiku 
+              ? '0 0 30px hsl(var(--aurora-pink) / 0.8), 0 0 60px hsl(var(--aurora-purple) / 0.4)'
+              : '0 0 20px hsl(var(--aurora-cyan) / 0.6)',
             filter: `blur(${word.opacity === 0 ? '20px' : '0px'})`,
             transform: `scale(${word.opacity === 0 ? 0.7 : 1})`,
           }}
