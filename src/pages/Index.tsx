@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import { Mic, MicOff, BarChart3, Camera, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { Mic, MicOff, BarChart3, Camera, Image as ImageIcon, Sparkles, Volume2, VolumeX } from 'lucide-react';
 
 import { AmbientField } from '@/components/AmbientField';
 import { ReactiveOverlay } from '@/components/ReactiveOverlay';
@@ -12,6 +12,7 @@ import { HaikuGenerator } from '@/components/HaikuGenerator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { AudioVisualizer, mapFrequencyToHue, mapAmplitudeToIntensity } from '@/lib/audioVisualization';
+import { startAmbientSoundscape, stopAmbientSoundscape, updateSoundscape, isSoundscapePlaying } from '@/lib/ambientSoundscape';
 import { supabase } from '@/integrations/supabase/client';
 
 type ContextState = 'intro' | 'active' | 'immersive' | 'reflection';
@@ -40,6 +41,7 @@ const Index = () => {
   const [haikuOpen, setHaikuOpen] = useState(false);
   const [backgroundHaiku, setBackgroundHaiku] = useState<string | null>(null);
   const [lastHaikuTime, setLastHaikuTime] = useState(0);
+  const [soundscapeEnabled, setSoundscapeEnabled] = useState(false);
   const visualizerRef = useRef<AudioVisualizer | null>(null);
   const mainRef = useRef<HTMLElement>(null);
   const peakDetectionRef = useRef({ recentPeaks: [] as number[], threshold: 0.7 });
@@ -121,6 +123,32 @@ const Index = () => {
     const interval = setInterval(detectPeakForHaiku, 2000);
     return () => clearInterval(interval);
   }, [motionIntensity, interactionFrequency, audioAmplitude, audioEnabled, lastHaikuTime, generateBackgroundHaiku]);
+
+  // Update ambient soundscape based on visual state
+  useEffect(() => {
+    if (soundscapeEnabled) {
+      updateSoundscape(audioHue, audioAmplitude, motionIntensity, interactionFrequency);
+    }
+  }, [soundscapeEnabled, audioHue, audioAmplitude, motionIntensity, interactionFrequency]);
+
+  // Toggle ambient soundscape
+  const toggleSoundscape = useCallback(() => {
+    if (soundscapeEnabled) {
+      stopAmbientSoundscape();
+      setSoundscapeEnabled(false);
+      toast({
+        title: "Ambient Soundscape Off",
+        description: "Background audio textures disabled",
+      });
+    } else {
+      startAmbientSoundscape();
+      setSoundscapeEnabled(true);
+      toast({
+        title: "Ambient Soundscape On",
+        description: "Reactive drone tones and atmospheric textures enabled",
+      });
+    }
+  }, [soundscapeEnabled, toast]);
   
   const handleInteraction = useCallback(() => {
     setInteractionFrequency(prev => Math.min(10, prev + 1));
@@ -327,6 +355,9 @@ const Index = () => {
   useEffect(() => {
     return () => {
       visualizerRef.current?.stop();
+      if (isSoundscapePlaying()) {
+        stopAmbientSoundscape();
+      }
     };
   }, []);
   
@@ -407,6 +438,24 @@ const Index = () => {
             }}
           >
             <ImageIcon className="w-6 h-6" />
+          </Button>
+          
+          <Button
+            onClick={toggleSoundscape}
+            variant={soundscapeEnabled ? "default" : "outline"}
+            size="icon"
+            className="w-14 h-14 rounded-full shadow-lg transition-all duration-300"
+            style={{
+              background: soundscapeEnabled ? 'hsl(var(--aurora-purple) / 0.3)' : 'hsl(var(--background) / 0.8)',
+              backdropFilter: 'blur(10px)',
+              border: soundscapeEnabled ? '2px solid hsl(var(--aurora-purple))' : '1px solid hsl(var(--border))',
+            }}
+          >
+            {soundscapeEnabled ? (
+              <Volume2 className="w-6 h-6" style={{ color: 'hsl(var(--aurora-purple))' }} />
+            ) : (
+              <VolumeX className="w-6 h-6" />
+            )}
           </Button>
           
           {audioEnabled && (
