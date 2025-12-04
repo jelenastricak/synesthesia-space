@@ -82,6 +82,45 @@ const Index = () => {
       clearInterval(interval);
     };
   }, [audioEnabled, lastHaikuTime, generateBackgroundHaiku]);
+
+  // Generate haikus during peak interaction moments (regardless of audio)
+  useEffect(() => {
+    const HAIKU_PEAK_COOLDOWN = 20000; // 20 seconds minimum between peak-triggered haikus
+    
+    const detectPeakForHaiku = () => {
+      const now = Date.now();
+      const timeSinceLastHaiku = now - lastHaikuTime;
+      
+      // Skip if haiku was generated recently
+      if (timeSinceLastHaiku < HAIKU_PEAK_COOLDOWN) return;
+      
+      // Calculate interaction scores
+      const motionScore = Math.min(1, motionIntensity / 10);
+      const interactionScore = Math.min(1, interactionFrequency / 10);
+      const audioScore = audioEnabled ? audioAmplitude : 0;
+      
+      // Combined score weighted toward motion and interaction
+      const compositeScore = audioEnabled 
+        ? (audioScore * 0.4) + (motionScore * 0.35) + (interactionScore * 0.25)
+        : (motionScore * 0.6) + (interactionScore * 0.4);
+      
+      // Trigger haiku at high interaction peaks
+      const isPeakMoment = compositeScore > 0.75 && (motionScore > 0.7 || interactionScore > 0.7);
+      
+      if (isPeakMoment) {
+        console.log('Peak interaction detected - generating haiku', {
+          composite: compositeScore.toFixed(2),
+          motion: motionScore.toFixed(2),
+          interaction: interactionScore.toFixed(2),
+        });
+        generateBackgroundHaiku();
+      }
+    };
+
+    // Check for peaks every 2 seconds
+    const interval = setInterval(detectPeakForHaiku, 2000);
+    return () => clearInterval(interval);
+  }, [motionIntensity, interactionFrequency, audioAmplitude, audioEnabled, lastHaikuTime, generateBackgroundHaiku]);
   
   const handleInteraction = useCallback(() => {
     setInteractionFrequency(prev => Math.min(10, prev + 1));
