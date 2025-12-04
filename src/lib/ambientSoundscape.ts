@@ -1,22 +1,28 @@
-// Ambient Soundscape - Reactive drone tones and atmospheric textures
+// Ambient Soundscape - Uses uploaded ambient tracks with reactive effects
 
 let audioContext: AudioContext | null = null;
 let masterGain: GainNode | null = null;
-let convolver: ConvolverNode | null = null;
 let isPlaying = false;
 
-// Drone layers
-interface DroneLayer {
-  oscillator: OscillatorNode;
+// Audio tracks
+const TRACKS = [
+  '/audio/meditation-flow.mp3',
+  '/audio/morning-reverie.mp3',
+  '/audio/ambient-meditation.mp3',
+  '/audio/sunrise-sea.mp3',
+];
+
+interface AudioTrack {
+  buffer: AudioBuffer | null;
+  source: AudioBufferSourceNode | null;
   gainNode: GainNode;
   filter: BiquadFilterNode;
-  lfo: OscillatorNode;
-  lfoGain: GainNode;
 }
 
-let droneLayers: DroneLayer[] = [];
-let subBass: { oscillator: OscillatorNode; gain: GainNode } | null = null;
-let noiseNode: { source: AudioBufferSourceNode; gain: GainNode; filter: BiquadFilterNode } | null = null;
+let tracks: AudioTrack[] = [];
+let currentTrackIndex = 0;
+let trackLoadPromise: Promise<void> | null = null;
+let convolver: ConvolverNode | null = null;
 
 // Current state for reactive updates
 let currentState = {
@@ -27,7 +33,7 @@ let currentState = {
 };
 
 // Initialize audio context
-const initAudioContext = () => {
+const initAudioContext = async () => {
   if (!audioContext) {
     audioContext = new AudioContext();
     masterGain = audioContext.createGain();
@@ -35,14 +41,14 @@ const initAudioContext = () => {
     
     // Create reverb
     convolver = audioContext.createConvolver();
-    const reverbBuffer = createReverbImpulse(audioContext, 3, 2);
+    const reverbBuffer = createReverbImpulse(audioContext, 2.5, 2.5);
     convolver.buffer = reverbBuffer;
     
     // Wet/dry mix
     const dryGain = audioContext.createGain();
     const wetGain = audioContext.createGain();
-    dryGain.gain.value = 0.6;
-    wetGain.gain.value = 0.4;
+    dryGain.gain.value = 0.7;
+    wetGain.gain.value = 0.3;
     
     masterGain.connect(dryGain);
     masterGain.connect(convolver);
@@ -50,6 +56,24 @@ const initAudioContext = () => {
     
     dryGain.connect(audioContext.destination);
     wetGain.connect(audioContext.destination);
+    
+    // Initialize track slots
+    tracks = TRACKS.map(() => ({
+      buffer: null,
+      source: null,
+      gainNode: audioContext!.createGain(),
+      filter: audioContext!.createBiquadFilter(),
+    }));
+    
+    // Configure filters
+    tracks.forEach((track, i) => {
+      track.gainNode.gain.value = 0;
+      track.filter.type = 'lowpass';
+      track.filter.frequency.value = 2000;
+      track.filter.Q.value = 0.5;
+      track.filter.connect(track.gainNode);
+      track.gainNode.connect(masterGain!);
+    });
   }
   return audioContext;
 };
@@ -70,140 +94,110 @@ const createReverbImpulse = (ctx: AudioContext, duration: number, decay: number)
   return impulse;
 };
 
-// Create pink noise buffer
-const createNoiseBuffer = (ctx: AudioContext) => {
-  const bufferSize = ctx.sampleRate * 2;
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
+// Load audio tracks
+const loadTracks = async () => {
+  if (!audioContext || trackLoadPromise) return trackLoadPromise;
   
-  // Pink noise approximation
-  let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+  trackLoadPromise = Promise.all(
+    TRACKS.map(async (url, i) => {
+      try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        tracks[i].buffer = await audioContext!.decodeAudioData(arrayBuffer);
+        console.log(`Loaded track: ${url}`);
+      } catch (error) {
+        console.error(`Failed to load track ${url}:`, error);
+      }
+    })
+  ).then(() => {
+    console.log('All ambient tracks loaded');
+  });
   
-  for (let i = 0; i < bufferSize; i++) {
-    const white = Math.random() * 2 - 1;
-    b0 = 0.99886 * b0 + white * 0.0555179;
-    b1 = 0.99332 * b1 + white * 0.0750759;
-    b2 = 0.96900 * b2 + white * 0.1538520;
-    b3 = 0.86650 * b3 + white * 0.3104856;
-    b4 = 0.55000 * b4 + white * 0.5329522;
-    b5 = -0.7616 * b5 - white * 0.0168980;
-    data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
-    b6 = white * 0.115926;
+  return trackLoadPromise;
+};
+
+// Play a specific track
+const playTrack = (index: number, fadeIn = true) => {
+  if (!audioContext || !tracks[index]?.buffer) return;
+  
+  const track = tracks[index];
+  const now = audioContext.currentTime;
+  
+  // Stop existing source if any
+  if (track.source) {
+    try {
+      track.source.stop();
+    } catch (e) {}
   }
   
-  return buffer;
+  // Create new source
+  track.source = audioContext.createBufferSource();
+  track.source.buffer = track.buffer;
+  track.source.loop = true;
+  track.source.connect(track.filter);
+  
+  if (fadeIn) {
+    track.gainNode.gain.setValueAtTime(0, now);
+    track.gainNode.gain.linearRampToValueAtTime(0.5, now + 3);
+  } else {
+    track.gainNode.gain.setValueAtTime(0.5, now);
+  }
+  
+  track.source.start(0);
 };
 
-// Map hue to musical key (pentatonic scale frequencies)
-const hueToFrequencies = (hue: number): number[] => {
-  // Map hue (0-360) to different harmonic bases
-  const baseFreq = 55 + (hue / 360) * 55; // A1 to A2 range
+// Crossfade to a different track
+const crossfadeTo = (newIndex: number) => {
+  if (!audioContext || newIndex === currentTrackIndex) return;
   
-  // Pentatonic ratios for pleasant harmonics
-  const ratios = [1, 1.125, 1.333, 1.5, 1.667, 2]; // Pentatonic intervals
+  const now = audioContext.currentTime;
+  const fadeTime = 4;
   
-  return ratios.map(r => baseFreq * r);
-};
-
-// Create a drone layer
-const createDroneLayer = (ctx: AudioContext, frequency: number, type: OscillatorType): DroneLayer => {
-  const oscillator = ctx.createOscillator();
-  const gainNode = ctx.createGain();
-  const filter = ctx.createBiquadFilter();
-  const lfo = ctx.createOscillator();
-  const lfoGain = ctx.createGain();
+  // Fade out current
+  const currentTrack = tracks[currentTrackIndex];
+  if (currentTrack.source) {
+    currentTrack.gainNode.gain.cancelScheduledValues(now);
+    currentTrack.gainNode.gain.setValueAtTime(currentTrack.gainNode.gain.value, now);
+    currentTrack.gainNode.gain.linearRampToValueAtTime(0, now + fadeTime);
+    
+    setTimeout(() => {
+      try {
+        currentTrack.source?.stop();
+        currentTrack.source = null;
+      } catch (e) {}
+    }, fadeTime * 1000 + 100);
+  }
   
-  // Oscillator setup
-  oscillator.type = type;
-  oscillator.frequency.value = frequency;
-  oscillator.detune.value = (Math.random() - 0.5) * 15;
-  
-  // Filter setup - lowpass for warmth
-  filter.type = 'lowpass';
-  filter.frequency.value = 800;
-  filter.Q.value = 1;
-  
-  // LFO for subtle movement
-  lfo.type = 'sine';
-  lfo.frequency.value = 0.1 + Math.random() * 0.2;
-  lfoGain.gain.value = frequency * 0.02; // Subtle pitch wobble
-  
-  // Gain envelope
-  gainNode.gain.value = 0;
-  
-  // Connect
-  lfo.connect(lfoGain);
-  lfoGain.connect(oscillator.frequency);
-  oscillator.connect(filter);
-  filter.connect(gainNode);
-  gainNode.connect(masterGain!);
-  
-  return { oscillator, gainNode, filter, lfo, lfoGain };
+  // Start and fade in new track
+  currentTrackIndex = newIndex;
+  playTrack(newIndex, true);
 };
 
 // Start the ambient soundscape
-export const startAmbientSoundscape = () => {
+export const startAmbientSoundscape = async () => {
   if (isPlaying) return;
   
-  const ctx = initAudioContext();
+  const ctx = await initAudioContext();
+  await loadTracks();
+  
   const now = ctx.currentTime;
   
-  // Create drone layers at different frequencies
-  const frequencies = hueToFrequencies(currentState.hue);
+  // Start with first available track
+  const firstLoadedIndex = tracks.findIndex(t => t.buffer !== null);
+  if (firstLoadedIndex === -1) {
+    console.error('No tracks loaded');
+    return;
+  }
   
-  frequencies.forEach((freq, i) => {
-    const types: OscillatorType[] = ['sine', 'triangle', 'sine', 'triangle', 'sine', 'sine'];
-    const layer = createDroneLayer(ctx, freq, types[i]);
-    
-    // Staggered fade in
-    layer.gainNode.gain.setValueAtTime(0, now);
-    layer.gainNode.gain.linearRampToValueAtTime(0.03 - i * 0.003, now + 2 + i * 0.5);
-    
-    layer.oscillator.start(now);
-    layer.lfo.start(now);
-    
-    droneLayers.push(layer);
-  });
-  
-  // Sub bass drone
-  const subOsc = ctx.createOscillator();
-  const subGain = ctx.createGain();
-  subOsc.type = 'sine';
-  subOsc.frequency.value = 55;
-  subGain.gain.setValueAtTime(0, now);
-  subGain.gain.linearRampToValueAtTime(0.08, now + 3);
-  subOsc.connect(subGain);
-  subGain.connect(masterGain!);
-  subOsc.start(now);
-  subBass = { oscillator: subOsc, gain: subGain };
-  
-  // Atmospheric noise layer
-  const noiseBuffer = createNoiseBuffer(ctx);
-  const noiseSource = ctx.createBufferSource();
-  const noiseGain = ctx.createGain();
-  const noiseFilter = ctx.createBiquadFilter();
-  
-  noiseSource.buffer = noiseBuffer;
-  noiseSource.loop = true;
-  noiseFilter.type = 'bandpass';
-  noiseFilter.frequency.value = 400;
-  noiseFilter.Q.value = 0.5;
-  noiseGain.gain.setValueAtTime(0, now);
-  noiseGain.gain.linearRampToValueAtTime(0.015, now + 4);
-  
-  noiseSource.connect(noiseFilter);
-  noiseFilter.connect(noiseGain);
-  noiseGain.connect(masterGain!);
-  noiseSource.start(now);
-  
-  noiseNode = { source: noiseSource, gain: noiseGain, filter: noiseFilter };
+  currentTrackIndex = firstLoadedIndex;
+  playTrack(currentTrackIndex, true);
   
   // Fade in master
   masterGain!.gain.setValueAtTime(0, now);
-  masterGain!.gain.linearRampToValueAtTime(0.25, now + 2);
+  masterGain!.gain.linearRampToValueAtTime(0.6, now + 2);
   
   isPlaying = true;
-  console.log('Ambient soundscape started');
+  console.log('Ambient soundscape started with uploaded tracks');
 };
 
 // Stop the ambient soundscape
@@ -219,26 +213,13 @@ export const stopAmbientSoundscape = () => {
   masterGain!.gain.linearRampToValueAtTime(0, now + fadeTime);
   
   setTimeout(() => {
-    // Stop all drone layers
-    droneLayers.forEach(layer => {
+    // Stop all tracks
+    tracks.forEach(track => {
       try {
-        layer.oscillator.stop();
-        layer.lfo.stop();
+        track.source?.stop();
+        track.source = null;
       } catch (e) {}
     });
-    droneLayers = [];
-    
-    // Stop sub bass
-    if (subBass) {
-      try { subBass.oscillator.stop(); } catch (e) {}
-      subBass = null;
-    }
-    
-    // Stop noise
-    if (noiseNode) {
-      try { noiseNode.source.stop(); } catch (e) {}
-      noiseNode = null;
-    }
     
     isPlaying = false;
     console.log('Ambient soundscape stopped');
@@ -257,45 +238,37 @@ export const updateSoundscape = (hue: number, amplitude: number, motion: number,
   const normalizedInteraction = Math.min(1, interaction / 10);
   const combinedIntensity = (amplitude * 0.4 + normalizedMotion * 0.35 + normalizedInteraction * 0.25);
   
-  // Update drone layer filters and gains based on intensity
-  droneLayers.forEach((layer, i) => {
-    // Filter frequency responds to intensity - opens up with more activity
-    const baseFilterFreq = 400 + combinedIntensity * 1600;
-    layer.filter.frequency.setTargetAtTime(baseFilterFreq + i * 100, now, 0.3);
+  // Select track based on hue (different moods)
+  // 0-90: meditation-flow (index 0)
+  // 90-180: morning-reverie (index 1)
+  // 180-270: ambient-meditation (index 2)
+  // 270-360: sunrise-sea (index 3)
+  const loadedTracks = tracks.map((t, i) => t.buffer ? i : -1).filter(i => i >= 0);
+  if (loadedTracks.length > 1) {
+    const hueSection = Math.floor((hue / 360) * loadedTracks.length);
+    const targetTrack = loadedTracks[Math.min(hueSection, loadedTracks.length - 1)];
     
-    // Gain responds to amplitude
-    const baseGain = 0.02 + combinedIntensity * 0.04;
-    layer.gainNode.gain.setTargetAtTime(Math.max(0.01, baseGain - i * 0.005), now, 0.5);
-    
-    // LFO speed increases with interaction
-    const lfoSpeed = 0.1 + normalizedInteraction * 0.3;
-    layer.lfo.frequency.setTargetAtTime(lfoSpeed, now, 0.5);
-    
-    // Pitch shift based on hue
-    const newFreqs = hueToFrequencies(hue);
-    if (newFreqs[i]) {
-      layer.oscillator.frequency.setTargetAtTime(newFreqs[i], now, 2);
+    // Only crossfade if significantly different and not too frequent
+    if (targetTrack !== currentTrackIndex) {
+      crossfadeTo(targetTrack);
     }
-  });
-  
-  // Sub bass responds to low-frequency content
-  if (subBass) {
-    const subFreq = 45 + amplitude * 20;
-    subBass.oscillator.frequency.setTargetAtTime(subFreq, now, 0.5);
-    subBass.gain.gain.setTargetAtTime(0.05 + combinedIntensity * 0.1, now, 0.3);
   }
   
-  // Noise responds to motion - more hiss with more movement
-  if (noiseNode) {
-    const noiseFreq = 300 + normalizedMotion * 800 + hue;
-    noiseNode.filter.frequency.setTargetAtTime(noiseFreq, now, 0.2);
-    noiseNode.gain.gain.setTargetAtTime(0.01 + normalizedMotion * 0.04, now, 0.3);
+  // Update filter on current track - opens up with intensity
+  const currentTrack = tracks[currentTrackIndex];
+  if (currentTrack) {
+    const filterFreq = 800 + combinedIntensity * 4000; // 800Hz to 4800Hz
+    currentTrack.filter.frequency.setTargetAtTime(filterFreq, now, 0.3);
+    
+    // Subtle gain modulation with amplitude
+    const trackGain = 0.4 + combinedIntensity * 0.3;
+    currentTrack.gainNode.gain.setTargetAtTime(trackGain, now, 0.5);
   }
   
-  // Master gain pulses slightly with amplitude
+  // Master volume responds to combined intensity
   if (masterGain) {
-    const masterVol = 0.2 + combinedIntensity * 0.15;
-    masterGain.gain.setTargetAtTime(masterVol, now, 0.1);
+    const masterVol = 0.4 + combinedIntensity * 0.3;
+    masterGain.gain.setTargetAtTime(masterVol, now, 0.2);
   }
 };
 
@@ -308,3 +281,9 @@ export const setSoundscapeVolume = (volume: number) => {
 
 // Check if playing
 export const isSoundscapePlaying = () => isPlaying;
+
+// Get current track name for UI
+export const getCurrentTrackName = () => {
+  const names = ['Meditation Flow', 'Morning Reverie', 'Ambient Meditation', 'Sunrise Sea'];
+  return names[currentTrackIndex] || 'Unknown';
+};
