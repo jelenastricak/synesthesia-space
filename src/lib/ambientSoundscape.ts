@@ -177,7 +177,15 @@ const crossfadeTo = (newIndex: number) => {
 export const startAmbientSoundscape = async () => {
   if (isPlaying) return;
   
+  console.log('Starting ambient soundscape...');
   const ctx = await initAudioContext();
+  
+  // Resume audio context if suspended (browser autoplay policy)
+  if (ctx.state === 'suspended') {
+    console.log('Resuming suspended audio context...');
+    await ctx.resume();
+  }
+  
   await loadTracks();
   
   const now = ctx.currentTime;
