@@ -1,5 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
-import { initAudioContext, playSoftTone, playHarmonicChord } from '@/lib/audioSynth';
+import { useEffect, useState } from 'react';
 
 interface ReactiveOverlayProps {
   onInteraction: () => void;
@@ -16,23 +15,10 @@ export const ReactiveOverlay = ({
 }: ReactiveOverlayProps) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [pulses, setPulses] = useState<Array<{ id: number; x: number; y: number }>>([]);
-  const audioInitialized = useRef(false);
   
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      // Initialize audio context on first interaction
-      if (!audioInitialized.current) {
-        initAudioContext();
-        audioInitialized.current = true;
-      }
-      
       setMousePosition({ x: e.clientX, y: e.clientY });
-      
-      // Play soft tone on hover (throttled) - more frequent with audio enabled
-      if (Math.random() > 0.96) { // Lowered from 0.98 to 0.96 for more frequent sounds
-        const frequency = 400 + Math.random() * 400; // 400-800Hz
-        playSoftTone(frequency, 0.3);
-      }
       
       // Update motion intensity based on movement speed
       const movement = Math.hypot(e.movementX, e.movementY);
@@ -41,10 +27,6 @@ export const ReactiveOverlay = ({
     
     const handleClick = (e: MouseEvent) => {
       onInteraction();
-      
-      // Play harmonic chord on click
-      const baseFreq = 200 + Math.random() * 100; // 200-300Hz
-      playHarmonicChord(baseFreq, 0.8);
       
       // Create pulse effect
       const newPulse = { id: Date.now(), x: e.clientX, y: e.clientY };
