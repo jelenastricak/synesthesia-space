@@ -53,6 +53,8 @@ export default {
           pink: "hsl(var(--aurora-pink))",
           blue: "hsl(var(--aurora-blue))",
           cyan: "hsl(var(--aurora-cyan))",
+          mint: "hsl(var(--aurora-mint))",
+          violet: "hsl(var(--aurora-violet))",
         },
       },
       borderRadius: {
