@@ -192,9 +192,15 @@ const Index = () => {
         visualizerRef.current = visualizer;
         setAudioEnabled(true);
         
+        // Auto-start ambient soundscape when microphone is enabled
+        if (!soundscapeEnabled) {
+          startAmbientSoundscape();
+          setSoundscapeEnabled(true);
+        }
+        
         toast({
           title: "Audio Visualization Active",
-          description: "Ambient sound is now influencing the visual experience",
+          description: "Ambient sound and soundscape are now active",
         });
       } catch (error) {
         toast({
@@ -211,12 +217,18 @@ const Index = () => {
       setAudioHue(0);
       setAudioAmplitude(0);
       
+      // Also stop soundscape when microphone is disabled
+      if (soundscapeEnabled) {
+        stopAmbientSoundscape();
+        setSoundscapeEnabled(false);
+      }
+      
       toast({
         title: "Audio Visualization Disabled",
-        description: "Visual experience is no longer affected by ambient sound",
+        description: "Visual experience and soundscape are now off",
       });
     }
-  }, [audioEnabled, toast]);
+  }, [audioEnabled, soundscapeEnabled, toast]);
   
   const captureScreenshot = useCallback(async () => {
     if (!mainRef.current) return;
