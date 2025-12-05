@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { X } from 'lucide-react';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -72,14 +73,22 @@ const Auth = () => {
       style={{ background: 'hsl(var(--background))' }}
     >
       <div 
-        className="w-full max-w-sm p-8 rounded-2xl"
+        className="w-full max-w-sm p-8 rounded-2xl relative"
         style={{
           background: 'hsl(var(--background) / 0.95)',
           border: '1px solid hsl(var(--border) / 0.5)',
           boxShadow: '0 20px 60px hsl(var(--aurora-purple) / 0.3)',
         }}
       >
-        <h1 
+        <button
+          onClick={() => navigate('/')}
+          className="absolute top-4 right-4 p-1 rounded-full opacity-60 hover:opacity-100 transition-opacity"
+          style={{ color: 'hsl(var(--foreground))' }}
+          aria-label="Close"
+        >
+          <X size={20} />
+        </button>
+        <h1
           className="text-2xl font-light tracking-widest text-center mb-8"
           style={{ color: 'hsl(var(--foreground))' }}
         >
