@@ -8,57 +8,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Aurora-inspired synesthetic color palette */
-    --background: 240 30% 8%;
-    --foreground: 200 30% 95%;
+    /* Deep space background with subtle warmth */
+    --background: 250 25% 6%;
+    --foreground: 210 40% 98%;
 
-    /* Aurora gradient colors */
-    --aurora-teal: 180 70% 50%;
-    --aurora-purple: 280 65% 55%;
-    --aurora-pink: 320 70% 65%;
-    --aurora-blue: 220 80% 60%;
-    --aurora-cyan: 190 75% 55%;
+    /* Vivid aurora gradient colors - more saturated and luminous */
+    --aurora-teal: 172 85% 55%;
+    --aurora-purple: 270 80% 65%;
+    --aurora-pink: 330 85% 70%;
+    --aurora-blue: 215 90% 65%;
+    --aurora-cyan: 185 90% 60%;
+    --aurora-mint: 160 75% 60%;
+    --aurora-violet: 285 75% 70%;
     
-    /* Semantic colors */
-    --primary: 280 65% 55%;
+    /* Semantic colors - clean and vibrant */
+    --primary: 270 80% 65%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 180 70% 50%;
-    --secondary-foreground: 240 30% 8%;
+    --secondary: 172 85% 55%;
+    --secondary-foreground: 250 25% 6%;
 
-    --muted: 240 20% 20%;
-    --muted-foreground: 200 15% 65%;
+    --muted: 250 20% 15%;
+    --muted-foreground: 210 25% 70%;
 
-    --accent: 320 70% 65%;
-    --accent-foreground: 240 30% 8%;
+    --accent: 330 85% 70%;
+    --accent-foreground: 250 25% 6%;
 
-    --card: 240 25% 12%;
-    --card-foreground: 200 30% 95%;
+    --card: 250 22% 10%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 240 25% 12%;
-    --popover-foreground: 200 30% 95%;
+    --popover: 250 22% 10%;
+    --popover-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 240 20% 20%;
-    --input: 240 20% 20%;
-    --ring: 280 65% 55%;
+    --border: 250 20% 18%;
+    --input: 250 20% 18%;
+    --ring: 270 80% 65%;
 
     --radius: 1rem;
 
-    /* Custom aurora gradients */
-    --gradient-aurora-1: linear-gradient(135deg, hsl(var(--aurora-teal)) 0%, hsl(var(--aurora-purple)) 50%, hsl(var(--aurora-pink)) 100%);
-    --gradient-aurora-2: linear-gradient(225deg, hsl(var(--aurora-blue)) 0%, hsl(var(--aurora-cyan)) 50%, hsl(var(--aurora-teal)) 100%);
-    --gradient-aurora-3: linear-gradient(45deg, hsl(var(--aurora-purple)) 0%, hsl(var(--aurora-pink)) 50%, hsl(var(--aurora-blue)) 100%);
+    /* Enhanced aurora gradients - more dynamic and beautiful */
+    --gradient-aurora-1: linear-gradient(135deg, hsl(var(--aurora-cyan)) 0%, hsl(var(--aurora-purple)) 40%, hsl(var(--aurora-pink)) 100%);
+    --gradient-aurora-2: linear-gradient(225deg, hsl(var(--aurora-blue)) 0%, hsl(var(--aurora-teal)) 50%, hsl(var(--aurora-mint)) 100%);
+    --gradient-aurora-3: linear-gradient(45deg, hsl(var(--aurora-violet)) 0%, hsl(var(--aurora-pink)) 50%, hsl(var(--aurora-cyan)) 100%);
     
     /* Animation easing */
     --transition-breath: all 1.8s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-gentle: all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
     
-    /* Shadows with aurora glow */
-    --glow-soft: 0 0 40px hsl(var(--aurora-purple) / 0.3);
-    --glow-intense: 0 0 80px hsl(var(--aurora-pink) / 0.4), 0 0 120px hsl(var(--aurora-teal) / 0.2);
+    /* Enhanced glows - brighter and more ethereal */
+    --glow-soft: 0 0 50px hsl(var(--aurora-purple) / 0.35);
+    --glow-intense: 0 0 80px hsl(var(--aurora-pink) / 0.45), 0 0 140px hsl(var(--aurora-cyan) / 0.25);
   }
 }
 
